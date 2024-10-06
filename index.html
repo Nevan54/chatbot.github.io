@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chatbot Sederhana Buatan Nevan</title>
+    <title>AI Chatbot Sederhana</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
 
     <style>
         body {
-            background-color: #f0f4f8; /* Warna latar belakang */
+            background-color: #f0f4f8;
             font-family: 'Arial', sans-serif;
             height: 100vh;
             margin: 0;
@@ -38,17 +38,12 @@
             margin-top: 10px;
         }
 
-        /* Menghapus background warna pesan user */
-        .chat-bubble-primary {
-            background-color: transparent; /* Tidak ada background untuk user */
-            color: black; /* Teks user berwarna hitam */
-            font-weight: normal; /* Normal kecuali ada penekanan */
-        }
-
-        /* Warna pesan assistant tetap biru */
+        /* Menghapus background warna pesan user dan assistant */
+        .chat-bubble-primary,
         .chat-bubble-secondary {
-            background-color: #64b5f6;
-            color: white;
+            background-color: transparent; /* Tidak ada background untuk user dan assistant */
+            color: black;
+            font-weight: normal;
         }
 
         /* Styling untuk membuat teks dengan penekanan menjadi tebal */
@@ -96,7 +91,7 @@
 
         <div class="chat-container mb-4">
             <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
-                <p><strong>{{ message.role === 'user' ? '' : 'assistant:' }}</strong> {{ formatMessage(message.content) }}</p>
+                <p><strong>{{ message.role }}:</strong> {{ formatMessage(message.content) }}</p>
                 <button v-if="message.role === 'assistant'" class="copy-btn" @click="copyToClipboard(message.content)">Salin</button> <!-- Tombol Salin -->
             </div>
 
@@ -134,7 +129,11 @@
                     }
                 },
                 formatMessage(message) {
-                    return message.replace(/\d\.(.+?)(?=\d\.|$)/g, match => match.trim() + '\n\n'); // Memisahkan poin-poin
+                    // Memformat pesan agar lebih rapi, memisahkan poin dan daftar panjang
+                    return message
+                        .replace(/\d\.(.+?)(?=\d\.|$)/g, match => match.trim() + '\n\n') // Pisahkan poin-poin
+                        .replace(/\.([A-Za-z])/g, '. $1') // Tambahkan spasi setelah titik jika tidak ada
+                        .replace(/\n+/g, '\n\n'); // Pisahkan dengan jarak 2 baris untuk paragraf baru
                 },
                 copyToClipboard(content) {
                     const el = document.createElement('textarea');
