@@ -18,81 +18,49 @@
     <style>
 
         body {
-            background-color: #f1f5f9; /* Warna latar belakang lebih netral */
-            font-family: 'Inter', sans-serif; /* Mengganti font untuk kesan modern */
-            color: #333; /* Warna teks lebih soft */
+            background-color: #f8fafc; /* Warna latar belakang */
+            font-family: 'Arial', sans-serif; /* Mengubah font */
         }
 
         .chat-container {
-            background: #ffffff; /* Latar belakang kotak chat putih bersih */
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* Menambahkan bayangan */
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .chat-bubble {
-            display: inline-block;
-            padding: 10px 15px;
-            border-radius: 20px;
-            margin-bottom: 10px;
-            transition: background-color 0.3s ease;
-            position: relative;
-        }
-
-        .chat-bubble-primary {
-            background-color: #3b82f6; /* Warna biru lembut untuk pesan pengguna */
-            color: white;
-            text-align: left;
-        }
-
-        .chat-bubble-secondary {
-            background-color: #f3f4f6; /* Warna abu terang untuk balasan asisten */
-            color: #333;
-            text-align: left;
+            background: white; /* Latar belakang kotak chat */
+            border-radius: 10px; /* Sudut membulat */
+            padding: 20px; /* Padding dalam kotak */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Bayangan */
+            max-height: 500px; /* Tinggi maksimum */
+            overflow-y: auto; /* Scroll jika konten melebihi */
         }
 
         .input-area {
-            margin-top: 20px;
-        }
-
-        .input {
-            font-size: 16px; /* Ukuran font input lebih besar */
-        }
-
-        .btn-primary {
-            background-color: #3b82f6;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background-color: #2563eb; /* Warna lebih gelap saat hover */
+            margin-top: 20px; /* Jarak atas input */
         }
 
         .copy-btn {
-            position: absolute;
-            right: 10px;
-            top: 5px;
-            cursor: pointer;
-            background-color: #3b82f6;
+            background-color: #4CAF50; /* Warna tombol salin */
             color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
             border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
         }
 
         .copy-btn:hover {
-            background-color: #2563eb;
+            background-color: #45a049;
         }
 
-        .hidden-textarea {
-            position: absolute;
-            left: -9999px;
+        .copy-btn-small {
+            background-color: #3B82F6; /* Warna biru untuk salin script */
+            color: white;
+            border: none;
+            padding: 2px 5px;
+            font-size: 0.8em;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-left: 5px;
+        }
+
+        .copy-btn-small:hover {
+            background-color: #2563EB;
         }
 
     </style>
@@ -107,16 +75,21 @@
 
         <div class="chat-container mb-4">
 
-            <div class="chat" v-for="(message, index) in messages" :key="index">
-                <div :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
-                    <p><strong>{{ message.role }}:</strong> 
-                        <span v-if="message.isCode">
-                            <pre>{{ message.content }}</pre>
-                            <button class="copy-btn" @click="copyToClipboard(message.content)">Salin</button>
-                        </span>
-                        <span v-else>{{ message.content }}</span>
-                    </p>
+            <div v-for="(message, index) in messages" :key="index" class="mb-4">
+                <p><strong>{{ message.role === 'user' ? 'User' : 'Assistant' }}:</strong> {{ message.content }}</p>
+
+                <!-- Jika ada script, tampilkan format kode dengan tombol salin -->
+                <div v-if="message.role === 'assistant' && message.isCode">
+                    <pre><code>
+                        ```{{ message.language }}
+                        {{ message.content }}
+                        <button @click="copyScript(message.content, message.language)" class="copy-btn-small">Salin Script</button>
+                        ```
+                    </code></pre>
                 </div>
+
+                <!-- Tombol untuk menyalin seluruh pesan -->
+                <button @click="copyToClipboard(message.content)" class="copy-btn">Salin Pesan Keseluruhan</button>
             </div>
 
         </div>
@@ -125,9 +98,6 @@
             <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..." class="input input-bordered w-full" />
             <button @click="sendMessage" class="btn btn-primary mt-2">Kirim</button>
         </div>
-
-        <!-- Hidden textarea for copying text -->
-        <textarea id="hidden-textarea" class="hidden-textarea"></textarea>
 
     </div>
 
@@ -141,43 +111,55 @@
             methods: {
                 async sendMessage() {
                     if (this.inputMessage.trim() !== '') {
-                        const userMessage = { role: "user", content: this.inputMessage };
-                        this.inputMessage = '';
+                        const userMessage = { role: 'user', content: this.inputMessage };
                         this.messages.push(userMessage);
-                        const data = await generateText(this.messages);
-                        const isCode = this.detectCode(data); // Check if the response contains code
-                        this.messages.push({ role: "assistant", content: data, isCode });
+                        this.inputMessage = '';
+
+                        const assistantMessage = await this.generateText(this.messages);
+                        const language = this.detectLanguage(assistantMessage);
+                        this.messages.push({ role: 'assistant', content: assistantMessage, isCode: this.isCode(assistantMessage), language: language });
                     }
                 },
-                detectCode(content) {
-                    // Simple detection if the message contains a code block (e.g., uses backticks or common code keywords)
-                    const codeKeywords = ['function', 'const', 'let', 'var', 'if', 'else', 'class'];
-                    return codeKeywords.some(keyword => content.includes(keyword));
+
+                detectLanguage(content) {
+                    const languageMatch = content.match(/```(\w+)/); // Menangkap bahasa dari tanda ```lua, ```python, dll.
+                    return languageMatch ? languageMatch[1] : 'plain'; // Mengembalikan bahasa atau 'plain' jika tidak terdeteksi
                 },
-                copyToClipboard(content) {
-                    const textarea = document.getElementById('hidden-textarea');
-                    textarea.value = content;
-                    textarea.select();
-                    document.execCommand('copy');
-                    alert('Teks telah disalin ke clipboard!');
+
+                copyScript(content, language) {
+                    const formattedScript = `\`\`\`${language}\n${content}\n\`\`\``;
+                    navigator.clipboard.writeText(formattedScript).then(() => {
+                        alert('Script disalin ke clipboard');
+                    });
+                },
+
+                copyToClipboard(text) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        alert('Pesan disalin ke clipboard');
+                    });
+                },
+
+                isCode(text) {
+                    // Deteksi apakah teks adalah kode dengan pola tertentu, misalnya memiliki tanda ``` di dalam teks.
+                    return text.includes('```');
+                },
+
+                async generateText(messages) {
+                    const { HfInference } = await import('https://esm.sh/@huggingface/inference');
+                    const hf = new HfInference('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');
+
+                    const response = await hf.chatCompletion({
+                        model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                        messages: messages,
+                        max_tokens: 500,
+                        temperature: 0.3,
+                        seed: 0,
+                    });
+
+                    return response.choices[0].message.content;
                 }
             }
         });
-
-        async function generateText(messages) {
-            const { HfInference } = await import('https://esm.sh/@huggingface/inference');
-            const hf = new HfInference('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'); // Token baru
-
-            const response = await hf.chatCompletion({
-                model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-                messages: messages,
-                max_tokens: 500,
-                temperature: 0.3,
-                seed: 0,
-            });
-
-            return response.choices[0].message.content;
-        }
     </script>
 
 </body>
