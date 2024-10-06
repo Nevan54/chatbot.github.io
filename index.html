@@ -63,6 +63,16 @@
             background-color: #2563EB;
         }
 
+        pre code {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            display: block;
+            margin-bottom: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
     </style>
 
 </head>
@@ -76,20 +86,19 @@
         <div class="chat-container mb-4">
 
             <div v-for="(message, index) in messages" :key="index" class="mb-4">
-                <p><strong>{{ message.role === 'user' ? 'User' : 'Assistant' }}:</strong> {{ message.content }}</p>
+                <p><strong>{{ message.role === 'user' ? 'User' : 'Assistant' }}:</strong></p>
+                <p v-if="!message.isCode">{{ message.content }}</p>
 
-                <!-- Jika ada script, tampilkan format kode dengan tombol salin -->
-                <div v-if="message.role === 'assistant' && message.isCode">
+                <!-- Tampilkan format kode dengan tombol salin hanya untuk script -->
+                <div v-if="message.isCode">
                     <pre><code>
-                        ```{{ message.language }}
                         {{ message.content }}
-                        <button @click="copyScript(message.content, message.language)" class="copy-btn-small">Salin Script</button>
-                        ```
+                        <button @click="copyScript(message.content)" class="copy-btn-small">Salin Script</button>
                     </code></pre>
                 </div>
 
                 <!-- Tombol untuk menyalin seluruh pesan -->
-                <button @click="copyToClipboard(message.content)" class="copy-btn">Salin Pesan Keseluruhan</button>
+                <button @click="copyFullMessage(message)" class="copy-btn" v-if="message.role === 'assistant'">Salin Pesan Keseluruhan</button>
             </div>
 
         </div>
@@ -116,32 +125,38 @@
                         this.inputMessage = '';
 
                         const assistantMessage = await this.generateText(this.messages);
-                        const language = this.detectLanguage(assistantMessage);
-                        this.messages.push({ role: 'assistant', content: assistantMessage, isCode: this.isCode(assistantMessage), language: language });
+                        this.messages.push({ 
+                            role: 'assistant', 
+                            content: assistantMessage, 
+                            isCode: this.isCode(assistantMessage) 
+                        });
                     }
-                },
-
-                detectLanguage(content) {
-                    const languageMatch = content.match(/```(\w+)/); // Menangkap bahasa dari tanda ```lua, ```python, dll.
-                    return languageMatch ? languageMatch[1] : 'plain'; // Mengembalikan bahasa atau 'plain' jika tidak terdeteksi
-                },
-
-                copyScript(content, language) {
-                    const formattedScript = `\`\`\`${language}\n${content}\n\`\`\``;
-                    navigator.clipboard.writeText(formattedScript).then(() => {
-                        alert('Script disalin ke clipboard');
-                    });
-                },
-
-                copyToClipboard(text) {
-                    navigator.clipboard.writeText(text).then(() => {
-                        alert('Pesan disalin ke clipboard');
-                    });
                 },
 
                 isCode(text) {
                     // Deteksi apakah teks adalah kode dengan pola tertentu, misalnya memiliki tanda ``` di dalam teks.
                     return text.includes('```');
+                },
+
+                copyScript(content) {
+                    // Format script tanpa bahasa dan tanpa tanda ```
+                    const scriptContent = content.replace(/```(\w+)?\n|```/g, '').trim();
+                    navigator.clipboard.writeText(scriptContent).then(() => {
+                        alert('Script disalin ke clipboard');
+                    });
+                },
+
+                copyFullMessage(message) {
+                    // Hilangkan ``` dan bahasa program dari konten kode untuk salinan penuh
+                    let fullMessage = message.content;
+
+                    if (message.isCode) {
+                        fullMessage = fullMessage.replace(/```(\w+)?\n|```/g, '').trim();
+                    }
+
+                    navigator.clipboard.writeText(fullMessage).then(() => {
+                        alert('Pesan disalin ke clipboard');
+                    });
                 },
 
                 async generateText(messages) {
