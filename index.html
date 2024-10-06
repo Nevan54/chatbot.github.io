@@ -9,24 +9,24 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background-color: #f8fafc; /* Warna latar belakang */
-            font-family: 'Arial', sans-serif; /* Mengubah font */
-            margin: 0; /* Menghapus margin default */
-            height: 100vh; /* Memastikan tinggi penuh layar */
-            display: flex; /* Menggunakan flex untuk layout */
-            flex-direction: column; /* Susun kolom */
+            background-color: #f8fafc;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         .chat-container {
-            background: white; /* Latar belakang kotak chat */
-            border-radius: 10px; /* Sudut membulat */
-            padding: 20px; /* Padding dalam kotak */
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Bayangan */
-            flex: 1; /* Mengisi sisa ruang yang tersedia */
-            overflow-y: auto; /* Scroll jika konten melebihi */
-            margin-bottom: 20px; /* Jarak bawah */
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
         }
         .input-area {
-            margin-top: 20px; /* Jarak atas input */
+            margin-top: 20px;
         }
         .chat-bubble {
             margin-bottom: 10px;
@@ -34,20 +34,26 @@
             border-radius: 10px;
         }
         .chat-bubble-primary {
-            background-color: transparent; /* Warna transparan untuk pesan user */
-            color: black; /* Warna teks hitam */
+            background-color: transparent;
+            color: black;
         }
         .chat-bubble-secondary {
-            background-color: transparent; /* Warna transparan untuk pesan bot */
-            color: black; /* Warna teks hitam untuk pesan bot */
+            background-color: transparent;
+            color: black;
         }
         .copy-button {
-            color: blue; /* Warna teks biru */
-            text-decoration: none; /* Tanpa garis bawah */
-            cursor: pointer; /* Tanda kursor saat hover */
+            color: blue;
+            text-decoration: none;
+            cursor: pointer;
         }
         .copy-button:hover {
-            text-decoration: underline; /* Garis bawah saat hover */
+            text-decoration: underline;
+        }
+        .message-content p {
+            margin-bottom: 0.5em;
+        }
+        .message-content ul {
+            margin-left: 20px;
         }
     </style>
 </head>
@@ -56,10 +62,10 @@
         <h1 class="text-3xl font-bold mb-4 text-center">AI Chatbot Sederhana</h1>
         <div class="chat-container mb-4">
             <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
-                <p><strong>{{ message.role }}:</strong> {{ message.content }}</p>
-                <span @click="copyToClipboard(message.content)" class="copy-button">Salin</span> <!-- Ubah tombol salin menjadi tampilan teks -->
+                <div class="message-content" v-html="formatMessageContent(message.content)"></div>
+                <span @click="copyToClipboard(message.content)" class="copy-button">Salin</span>
             </div>
-            <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div> <!-- Tampilkan jika assistant sedang mengetik -->
+            <div v-if="typing" class="text-gray-500 italic">assistant sedang mengetik...</div>
         </div>
         <div class="input-area">
             <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..." class="input input-bordered w-full" />
@@ -73,7 +79,7 @@
             data: {
                 inputMessage: '',
                 messages: [],
-                typing: false, // Status untuk assistant sedang mengetik
+                typing: false,
             },
             methods: {
                 async sendMessage() {
@@ -82,17 +88,20 @@
                         this.inputMessage = '';
                         this.messages.push(userMessage);
                         
-                        this.typing = true; // Menampilkan "sedang mengetik"
-                        
+                        this.typing = true;
+
                         const data = await generateText(this.messages);
                         
-                        this.typing = false; // Sembunyikan "sedang mengetik"
+                        this.typing = false;
                         this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
                     }
                 },
                 cleanUpLinks(message) {
-                    // Menghapus spasi berlebih di tautan URL
                     return message.replace(/(https?:\/\/[^\s]+)\s+/g, '$1').replace(/\s+(com|org|net|id|co)/g, '$1');
+                },
+                formatMessageContent(content) {
+                    // Wrap content into proper HTML tags for better readability
+                    return content.replace(/\n/g, '<br>').replace(/(\d\.\s)/g, '<ul><li>$1</li></ul>');
                 },
                 copyToClipboard(content) {
                     const el = document.createElement('textarea');
@@ -108,7 +117,7 @@
 
         async function generateText(messages) {
             const { HfInference } = await import('https://esm.sh/@huggingface/inference');
-            const hf = new HfInference('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'); // Token baru
+            const hf = new HfInference('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');
 
             const response = await hf.chatCompletion({
                 model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
