@@ -96,10 +96,10 @@
                         this.typing = true;
 
                         // Daftar kata kunci yang terkait dengan pertanyaan penciptaan
-                        const keywords = ['siapa yang menciptakan', 'pencipta', 'siapa buat', 'siapa pemilik', 'yang punya kamu', 'pembuat kamu'];
+                        const keywords = ['siapa yang menciptakan anda', 'pencipta anda', 'siapa yang buat anda', 'siapa pemilik anda', 'yang punya kamu', 'pembuat kamu'];
 
                         // Daftar pengecualian kata kunci yang tidak masuk akal
-                        const exclusionKeywords = ['tuhan', 'alam semesta', 'bumi', 'seisinya', 'bulan', 'langit', 'awan', 'matahari', 'tanah', 'tumbuhan', 'hewan'];
+                        const exclusionKeywords = ['tuhan', 'alam semesta', 'bumi', 'seisinya', 'bulan', 'langit', 'awan', 'matahari'];
 
                         if (this.containsExclusion(userMessage.content, exclusionKeywords)) {
                             // Jika ada kata kunci yang tidak masuk akal, balas dengan respons umum
@@ -108,7 +108,7 @@
                             this.typing = false;
                         } else if (this.containsKeyword(userMessage.content, keywords)) {
                             // Jika pertanyaan terkait pencipta dan tidak dalam daftar pengecualian, balas dengan jawaban tentang pencipta
-                            const assistantMessage = "Saya dibuat atau diciptakan oleh Raya Fadilla Azhar, bertima kasihlah kepadanya karena telah membuat saya dan membantu anda.";
+                            const assistantMessage = "Saya dibuat atau diciptakan oleh Raya Fadilla Azhar, bertima kasihlah kepadanya karena telah membuat saya dan membantu anda. ini adalah kepemilikan website dan ai ini, jika yang anda tanya bukan kepemilikan atau pencipta website dan ai ini, mungkin karena keyword whitelistnya, contoh 'Pencipta' ini membuat bot ini akan mengirimkan pesan ini, tetapi tenang karena saya sudah memikirkannya jadi saya tambah lagi menjadi 'siapa yang menciptakan anda' itu contoh nya yang mungkin bisa menghindari anda yang bertanya serius malah dijawab ini hehe, tolong dimengerti ya, terima kasih. ";
                             this.messages.push({ role: "assistant", content: assistantMessage });
                             this.typing = false;
                         } else {
