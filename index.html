@@ -14,6 +14,16 @@
         body {
             background-color: #e0f7fa; /* Warna latar belakang baru */
             font-family: 'Arial', sans-serif;
+            height: 100vh; /* Tinggi penuh untuk body */
+            margin: 0; /* Hilangkan margin default */
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Sesuaikan tinggi container dengan layar penuh */
+            justify-content: space-between; /* Pisahkan bagian chat dan input */
+            padding: 20px;
         }
 
         .chat-container {
@@ -21,12 +31,12 @@
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            max-height: 500px;
             overflow-y: auto;
+            flex-grow: 1; /* Agar chat container memenuhi ruang yang ada */
         }
 
         .input-area {
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
         /* Styling untuk chat user dan assistant */
@@ -56,6 +66,14 @@
             color: #888;
             margin-top: 10px;
         }
+
+        .input {
+            width: 100%;
+        }
+
+        .btn {
+            width: 100%;
+        }
     </style>
 
 </head>
@@ -79,10 +97,8 @@
         </div>
 
         <div class="input-area">
-
             <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..." class="input input-bordered w-full" />
             <button @click="sendMessage" class="btn btn-primary mt-2">Kirim</button>
-
         </div>
 
     </div>
