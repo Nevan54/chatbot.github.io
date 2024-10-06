@@ -99,11 +99,11 @@
                         const keywords = ['siapa yang menciptakan', 'pencipta', 'siapa buat', 'siapa pemilik', 'yang punya kamu', 'pembuat kamu'];
 
                         // Daftar pengecualian kata kunci yang tidak masuk akal
-                        const exclusionKeywords = ['tuhan', 'alam semesta', 'bumi', 'seisinya'];
+                        const exclusionKeywords = ['tuhan', 'alam semesta', 'bumi', 'seisinya', 'bulan', 'langit', 'awan', 'matahari', 'tanah', 'tumbuhan', 'hewan'];
 
                         if (this.containsExclusion(userMessage.content, exclusionKeywords)) {
                             // Jika ada kata kunci yang tidak masuk akal, balas dengan respons umum
-                            const assistantMessage = "Maaf, saya tidak dapat memberikan jawaban terkait pertanyaan ini.";
+                            const assistantMessage = "Maaf, saya tidak dapat memberikan jawaban terkait pertanyaan ini. ini mungkin terjadi karena keyword blacklist yang saya tambahkan (Tanda Kepemilikan Chatbot ini) untuk menghindari ketidak masuk akalan pertanyaan pencipta yang lain contoh nya kaya 'Siapa tuhan anda' begitu, jadi mohon pengertiannya ini juga supaya tidak ada pihak lain yang mengaku-ngaku ini punya mereka";
                             this.messages.push({ role: "assistant", content: assistantMessage });
                             this.typing = false;
                         } else if (this.containsKeyword(userMessage.content, keywords)) {
