@@ -55,6 +55,10 @@
         .message-content ul {
             margin-left: 20px;
         }
+        .message-role {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -62,6 +66,7 @@
         <h1 class="text-3xl font-bold mb-4 text-center">AI Chatbot Sederhana</h1>
         <div class="chat-container mb-4">
             <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
+                <div class="message-role">{{ message.role === 'user' ? 'User' : 'Assistant' }}</div>
                 <div class="message-content" v-html="formatMessageContent(message.content)"></div>
                 <span @click="copyToClipboard(message.content)" class="copy-button">Salin</span>
             </div>
