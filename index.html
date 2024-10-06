@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 
 <head>
@@ -6,19 +6,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Chatbot Sederhana</title>
-
     <link href="https://cdn.jsdelivr.net/npm/daisyui@3.9.4/dist/full.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
 
     <style>
         body {
-            background-color: #f8fafc;
+            background-color: #e0f7fa; /* Warna latar belakang baru */
             font-family: 'Arial', sans-serif;
         }
 
         .chat-container {
-            background: white;
+            background: white; 
             border-radius: 10px;
             padding: 20px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -30,42 +29,25 @@
             margin-top: 20px;
         }
 
+        /* Styling untuk chat user dan assistant */
+        .chat-bubble-primary {
+            background-color: #81c784; /* Warna untuk pesan user */
+            color: white;
+        }
+
+        .chat-bubble-secondary {
+            background-color: #64b5f6; /* Warna untuk pesan assistant */
+            color: white;
+        }
+
+        /* Tombol salin */
         .copy-btn {
-            background-color: #4CAF50;
+            background-color: #64b5f6;
             color: white;
             border: none;
             padding: 5px 10px;
+            margin-top: 5px;
             cursor: pointer;
-            border-radius: 5px;
-        }
-
-        .copy-btn:hover {
-            background-color: #45a049;
-        }
-
-        .copy-btn-small {
-            background-color: #3B82F6;
-            color: white;
-            border: none;
-            padding: 2px 5px;
-            font-size: 0.8em;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-left: 5px;
-        }
-
-        .copy-btn-small:hover {
-            background-color: #2563EB;
-        }
-
-        pre code {
-            background-color: #f4f4f4;
-            padding: 10px;
-            border-radius: 5px;
-            display: block;
-            margin-bottom: 5px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
         }
     </style>
 
@@ -79,30 +61,24 @@
 
         <div class="chat-container mb-4">
 
-            <div v-for="(message, index) in messages" :key="index" class="mb-4">
-                <p><strong>{{ message.role === 'user' ? 'User' : 'Assistant' }}:</strong></p>
-                <p v-if="!message.isCode">{{ message.content }}</p>
+            <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
 
-                <!-- Tampilkan format kode dengan tombol salin hanya untuk script -->
-                <div v-if="message.isCode">
-                    <pre><code>{{ message.content }}</code></pre>
-                    <button @click="copyScript(message.content)" class="copy-btn-small">Salin Script</button>
-                </div>
-
-                <!-- Tombol untuk menyalin seluruh pesan -->
-                <button @click="copyFullMessage(message)" class="copy-btn" v-if="message.role === 'assistant'">Salin Pesan Keseluruhan</button>
+                <p><strong>{{ message.role }}:</strong> {{ message.content }}</p>
+                <button class="copy-btn" @click="copyToClipboard(message.content)">Salin</button> <!-- Tombol Salin -->
             </div>
 
         </div>
 
         <div class="input-area">
+
             <input type="text" v-model="inputMessage" @keyup.enter="sendMessage" placeholder="Ketik pesan..." class="input input-bordered w-full" />
             <button @click="sendMessage" class="btn btn-primary mt-2">Kirim</button>
+
         </div>
 
     </div>
 
-    <script>
+    <script type="module">
         new Vue({
             el: '#app',
             data: {
@@ -112,56 +88,40 @@
             methods: {
                 async sendMessage() {
                     if (this.inputMessage.trim() !== '') {
-                        const userMessage = { role: 'user', content: this.inputMessage };
-                        this.messages.push(userMessage);
+                        const userMessage = { role: "user", content: this.inputMessage };
                         this.inputMessage = '';
+                        this.messages.push(userMessage);
 
-                        // Simulasi respons assistant, ganti dengan API kamu jika diperlukan
-                        const assistantMessage = await this.generateText(this.messages);
-                        this.messages.push({ 
-                            role: 'assistant', 
-                            content: assistantMessage, 
-                            isCode: this.isCode(assistantMessage) 
-                        });
+                        const data = await generateText(this.messages);
+                        this.messages.push({ role: "assistant", content: data });
                     }
                 },
-
-                isCode(text) {
-                    // Deteksi apakah teks adalah kode dengan tanda ``` di dalam teks
-                    return text.includes('```');
-                },
-
-                copyScript(content) {
-                    // Menghilangkan tanda ``` dan bahasa dari script
-                    const scriptContent = content.replace(/```(\w+)?\n|```/g, '').trim();
-                    navigator.clipboard.writeText(scriptContent).then(() => {
-                        alert('Script disalin ke clipboard');
-                    }).catch(err => {
-                        console.error('Gagal menyalin script:', err);
-                    });
-                },
-
-                copyFullMessage(message) {
-                    let fullMessage = message.content;
-
-                    if (message.isCode) {
-                        // Hapus tanda ``` dari kode sebelum menyalin
-                        fullMessage = fullMessage.replace(/```(\w+)?\n|```/g, '').trim();
-                    }
-
-                    navigator.clipboard.writeText(fullMessage).then(() => {
-                        alert('Pesan disalin ke clipboard');
-                    }).catch(err => {
-                        console.error('Gagal menyalin pesan:', err);
-                    });
-                },
-
-                async generateText(messages) {
-                    // Simulasi respons AI, kembalikan string sebagai respons dari assistant
-                    return `Berikut adalah contoh skrip untuk mengatur walkspeed pemain di Roblox:\n\nlocal player = game.Players.LocalPlayer\nlocal character = player.Character\nlocal humanoid = character:WaitForChild("Humanoid")\n\n-- Mengatur walkspeed menjadi 50\nhumanoid.WalkSpeed = 50\n\nAnda dapat menyesuaikan angka 50 menjadi kecepatan yang diinginkan.`;
+                copyToClipboard(content) {
+                    const el = document.createElement('textarea');
+                    el.value = content;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                    alert('Pesan berhasil disalin!');
                 }
             }
         });
+
+        async function generateText(messages) {
+            const { HfInference } = await import('https://esm.sh/@huggingface/inference');
+            const hf = new HfInference('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'); // Token baru
+
+            const response = await hf.chatCompletion({
+                model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                messages: messages,
+                max_tokens: 500,
+                temperature: 0.3,
+                seed: 0,
+            });
+
+            return response.choices[0].message.content;
+        }
     </script>
 
 </body>
