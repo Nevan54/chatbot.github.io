@@ -92,7 +92,7 @@
                 <!-- Tampilkan format kode dengan tombol salin hanya untuk script -->
                 <div v-if="message.isCode">
                     <pre><code>
-                        {{ message.content }}
+                        {{ extractScript(message.content) }}
                         <button @click="copyScript(message.content)" class="copy-btn-small">Salin Script</button>
                     </code></pre>
                 </div>
@@ -138,20 +138,25 @@
                     return text.includes('```');
                 },
 
+                extractScript(content) {
+                    // Ekstraksi bagian kode dari konten dan hapus tanda ```
+                    return content.replace(/```(\w+)?\n|```/g, '').trim();
+                },
+
                 copyScript(content) {
-                    // Format script tanpa bahasa dan tanpa tanda ```
-                    const scriptContent = content.replace(/```(\w+)?\n|```/g, '').trim();
+                    // Salin hanya bagian kode tanpa bahasa program atau ```
+                    const scriptContent = this.extractScript(content);
                     navigator.clipboard.writeText(scriptContent).then(() => {
                         alert('Script disalin ke clipboard');
                     });
                 },
 
                 copyFullMessage(message) {
-                    // Hilangkan ``` dan bahasa program dari konten kode untuk salinan penuh
+                    // Salin seluruh pesan tanpa tanda ``` dan tanpa bahasa program
                     let fullMessage = message.content;
 
                     if (message.isCode) {
-                        fullMessage = fullMessage.replace(/```(\w+)?\n|```/g, '').trim();
+                        fullMessage = this.extractScript(fullMessage);
                     }
 
                     navigator.clipboard.writeText(fullMessage).then(() => {
