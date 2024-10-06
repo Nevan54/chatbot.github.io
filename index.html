@@ -84,7 +84,6 @@
             data: {
                 inputMessage: '',
                 messages: [
-                    // Pesan otomatis yang dikirim saat pertama kali pengguna membuka website
                     { role: 'assistant', content: 'Halo Selamat Datang di website ChatGPT versi buatan Raya, Orang yang menciptakan Website Ai ini adalah Raya Fadilla Azhar, Jika terjadi bug atau ada saran & pertanyaan silahkan WhatsApp Nomor Ini 0838-3232-5363, Website ini ter-inspirasi oleh ChatGPT https://chatgpt.com/ itu aja, terima kasih, selamat menggunakan website ai ini ya.' }
                 ],
                 typing: false,
@@ -98,27 +97,31 @@
                         
                         this.typing = true;
 
-                        // Daftar kata kunci yang terkait dengan pertanyaan penciptaan
                         const keywords = ['siapa yang menciptakan', 'pencipta', 'siapa buat', 'siapa pemilik', 'yang punya kamu', 'pembuat kamu'];
-
-                        // Daftar pengecualian kata kunci yang tidak masuk akal
                         const exclusionKeywords = ['tuhan', 'alam semesta', 'bumi', 'seisinya'];
 
                         if (this.containsExclusion(userMessage.content, exclusionKeywords)) {
-                            // Jika ada kata kunci yang tidak masuk akal, balas dengan respons umum
                             const assistantMessage = "Maaf, saya tidak dapat memberikan jawaban terkait pertanyaan ini.";
                             this.messages.push({ role: "assistant", content: assistantMessage });
                             this.typing = false;
                         } else if (this.containsKeyword(userMessage.content, keywords)) {
-                            // Jika pertanyaan terkait pencipta dan tidak dalam daftar pengecualian, balas dengan jawaban tentang pencipta
                             const assistantMessage = "Saya dibuat atau diciptakan oleh Raya Fadilla Azhar, bertima kasihlah kepadanya karena telah membuat saya dan membantu anda.";
                             this.messages.push({ role: "assistant", content: assistantMessage });
                             this.typing = false;
                         } else {
-                            // Jika tidak ada kata kunci pencipta, kirim ke model AI
-                            const data = await generateText(this.messages);
-                            this.typing = false;
-                            this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
+                            try {
+                                const data = await generateText(this.messages);
+                                if (data) {
+                                    this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
+                                } else {
+                                    this.messages.push({ role: "assistant", content: 'Maaf, saya tidak dapat memproses permintaan Anda saat ini.' });
+                                }
+                            } catch (error) {
+                                console.error("Error:", error);
+                                this.messages.push({ role: "assistant", content: 'Terjadi kesalahan saat memproses pesan. Coba lagi nanti.' });
+                            } finally {
+                                this.typing = false;
+                            }
                         }
                     }
                 },
@@ -126,7 +129,6 @@
                     return message.replace(/(https?:\/\/[^\s]+)\s+/g, '$1').replace(/\s+(com|org|net|id|co)/g, '$1');
                 },
                 formatMessageContent(content) {
-                    // Wrap content into proper HTML tags for better readability
                     return content.replace(/\n/g, '<br>').replace(/(\d\.\s)/g, '<ul><li>$1</li></ul>');
                 },
                 containsKeyword(message, keywords) {
@@ -150,18 +152,28 @@
         });
 
         async function generateText(messages) {
-            const { HfInference } = await import('https://esm.sh/@huggingface/inference');
-            const hf = new HfInference('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');
+            try {
+                const { HfInference } = await import('https://esm.sh/@huggingface/inference');
+                const hf = new HfInference('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');
 
-            const response = await hf.chatCompletion({
-                model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-                messages: messages,
-                max_tokens: 500,
-                temperature: 0.3,
-                seed: 0,
-            });
+                const response = await hf.chatCompletion({
+                    model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                    messages: messages,
+                    max_tokens: 500,
+                    temperature: 0.3,
+                    seed: 0,
+                });
 
-            return response.choices[0].message.content;
+                if (response && response.choices && response.choices.length > 0) {
+                    return response.choices[0].message.content;
+                } else {
+                    console.error("Response is empty or invalid:", response);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Error fetching data from model:", error);
+                return null;
+            }
         }
     </script>
 </body>
