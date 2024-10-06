@@ -83,9 +83,7 @@
             el: '#app',
             data: {
                 inputMessage: '',
-                messages: [
-                    { role: 'assistant', content: 'Halo Selamat Datang di website ChatGPT versi buatan Raya, Orang yang menciptakan Website Ai ini adalah Raya Fadilla Azhar, Jika terjadi bug atau ada saran & pertanyaan silahkan WhatsApp Nomor Ini 0838-3232-5363, Website ini ter-inspirasi oleh ChatGPT https://chatgpt.com/ itu aja, terima kasih, selamat menggunakan website ai ini ya.' }
-                ],
+                messages: [],
                 typing: false,
             },
             methods: {
@@ -97,31 +95,27 @@
                         
                         this.typing = true;
 
-                        const keywords = ['siapa yang menciptakan', 'pencipta', 'siapa buat', 'siapa pemilik', 'yang punya kamu', 'pembuat kamu'];
-                        const exclusionKeywords = ['tuhan', 'alam semesta', 'bumi', 'seisinya'];
+                        // Daftar kata kunci yang terkait dengan pertanyaan penciptaan
+                        const keywords = ['siapa yang menciptakan anda', 'pencipta anda', 'siapa yang buat anda', 'siapa pemilik anda', 'yang punya kamu', 'pembuat kamu'];
+
+                        // Daftar pengecualian kata kunci yang tidak masuk akal
+                        const exclusionKeywords = ['tuhan', 'alam semesta', 'bumi', 'seisinya', 'bulan', 'langit', 'awan', 'matahari'];
 
                         if (this.containsExclusion(userMessage.content, exclusionKeywords)) {
-                            const assistantMessage = "Maaf, saya tidak dapat memberikan jawaban terkait pertanyaan ini.";
+                            // Jika ada kata kunci yang tidak masuk akal, balas dengan respons umum
+                            const assistantMessage = "Maaf, saya tidak dapat memberikan jawaban terkait pertanyaan ini. ini mungkin terjadi karena keyword blacklist yang saya tambahkan (Tanda Kepemilikan Chatbot ini) untuk menghindari ketidak masuk akalan pertanyaan pencipta yang lain contoh nya kaya 'Siapa tuhan anda' begitu, jadi mohon pengertiannya ini juga supaya tidak ada pihak lain yang mengaku-ngaku ini punya mereka, saya juga menambahkan keyword whitelist misalnya 'siapa yang menciptakan anda / siapa pemilik anda' dan lain lain akan membalaskan nama saya sebagai orang yang menciptakan website dan ai ini, mohon maaf ketidak kemyamanan nya, saya harap anda bisa mengerti maksud saya, terima kasih.";
                             this.messages.push({ role: "assistant", content: assistantMessage });
                             this.typing = false;
                         } else if (this.containsKeyword(userMessage.content, keywords)) {
-                            const assistantMessage = "Saya dibuat atau diciptakan oleh Raya Fadilla Azhar, bertima kasihlah kepadanya karena telah membuat saya dan membantu anda.";
+                            // Jika pertanyaan terkait pencipta dan tidak dalam daftar pengecualian, balas dengan jawaban tentang pencipta
+                            const assistantMessage = "Saya dibuat atau diciptakan oleh Raya Fadilla Azhar, bertima kasihlah kepadanya karena telah membuat saya dan membantu anda. ini adalah kepemilikan website dan ai ini, jika yang anda tanya bukan kepemilikan atau pencipta website dan ai ini, mungkin karena keyword whitelistnya, contoh 'Pencipta' ini membuat bot ini akan mengirimkan pesan ini, tetapi tenang karena saya sudah memikirkannya jadi saya tambah lagi menjadi 'siapa yang menciptakan anda' itu contoh nya yang mungkin bisa menghindari anda yang bertanya serius malah dijawab ini hehe, tolong dimengerti ya, terima kasih. ";
                             this.messages.push({ role: "assistant", content: assistantMessage });
                             this.typing = false;
                         } else {
-                            try {
-                                const data = await generateText(this.messages);
-                                if (data) {
-                                    this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
-                                } else {
-                                    this.messages.push({ role: "assistant", content: 'Maaf, saya tidak dapat memproses permintaan Anda saat ini.' });
-                                }
-                            } catch (error) {
-                                console.error("Error:", error);
-                                this.messages.push({ role: "assistant", content: 'Terjadi kesalahan saat memproses pesan. Coba lagi nanti.' });
-                            } finally {
-                                this.typing = false;
-                            }
+                            // Jika tidak ada kata kunci pencipta, kirim ke model AI
+                            const data = await generateText(this.messages);
+                            this.typing = false;
+                            this.messages.push({ role: "assistant", content: this.cleanUpLinks(data) });
                         }
                     }
                 },
@@ -129,6 +123,7 @@
                     return message.replace(/(https?:\/\/[^\s]+)\s+/g, '$1').replace(/\s+(com|org|net|id|co)/g, '$1');
                 },
                 formatMessageContent(content) {
+                    // Wrap content into proper HTML tags for better readability
                     return content.replace(/\n/g, '<br>').replace(/(\d\.\s)/g, '<ul><li>$1</li></ul>');
                 },
                 containsKeyword(message, keywords) {
@@ -152,28 +147,18 @@
         });
 
         async function generateText(messages) {
-            try {
-                const { HfInference } = await import('https://esm.sh/@huggingface/inference');
-                const hf = new HfInference('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');
+            const { HfInference } = await import('https://esm.sh/@huggingface/inference');
+            const hf = new HfInference('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');
 
-                const response = await hf.chatCompletion({
-                    model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-                    messages: messages,
-                    max_tokens: 500,
-                    temperature: 0.3,
-                    seed: 0,
-                });
+            const response = await hf.chatCompletion({
+                model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+                messages: messages,
+                max_tokens: 500,
+                temperature: 0.3,
+                seed: 0,
+            });
 
-                if (response && response.choices && response.choices.length > 0) {
-                    return response.choices[0].message.content;
-                } else {
-                    console.error("Response is empty or invalid:", response);
-                    return null;
-                }
-            } catch (error) {
-                console.error("Error fetching data from model:", error);
-                return null;
-            }
+            return response.choices[0].message.content;
         }
     </script>
 </body>
