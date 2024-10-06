@@ -49,6 +49,13 @@
             margin-top: 5px;
             cursor: pointer;
         }
+
+        /* Indikator sedang mengetik */
+        .typing-indicator {
+            font-style: italic;
+            color: #888;
+            margin-top: 10px;
+        }
     </style>
 
 </head>
@@ -62,10 +69,12 @@
         <div class="chat-container mb-4">
 
             <div class="chat chat-start" v-for="(message, index) in messages" :key="index" :class="['chat-bubble', message.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary']">
-
                 <p><strong>{{ message.role }}:</strong> {{ message.content }}</p>
                 <button class="copy-btn" @click="copyToClipboard(message.content)">Salin</button> <!-- Tombol Salin -->
             </div>
+
+            <!-- Indikator mengetik akan muncul jika typing true -->
+            <p v-if="typing" class="typing-indicator">Assistant sedang mengetik...</p>
 
         </div>
 
@@ -83,7 +92,8 @@
             el: '#app',
             data: {
                 inputMessage: '',
-                messages: []
+                messages: [],
+                typing: false, // Menambahkan status typing
             },
             methods: {
                 async sendMessage() {
@@ -91,8 +101,12 @@
                         const userMessage = { role: "user", content: this.inputMessage };
                         this.inputMessage = '';
                         this.messages.push(userMessage);
-
+                        
+                        this.typing = true; // Mengaktifkan status typing
+                        
                         const data = await generateText(this.messages);
+                        
+                        this.typing = false; // Mematikan status typing setelah pesan diterima
                         this.messages.push({ role: "assistant", content: data });
                     }
                 },
